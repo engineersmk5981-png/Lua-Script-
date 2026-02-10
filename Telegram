@@ -1,0 +1,122 @@
+------------------------------------------------------------
+-- SAMPLE CODE: Telegram Alarm Notification (Lua)
+--
+-- Description:
+-- This sample code demonstrates how to monitor Bit and Word
+-- values from a controller/PLC and send alarm notifications
+-- to a Telegram Bot when the status changes.
+--
+-- Notes:
+-- 1) Replace Bot Token and Chat ID with real values before use.
+-- 2) tempBit and tempWord are used to prevent repeated messages.
+------------------------------------------------------------
+
+-- Store previous values to prevent continuous notifications
+local tempBit = 0
+local tempWord = 0
+
+-- Sample Telegram Bot Token / Chat ID (Replace with real values)
+local botToken = "YOUR_TELEGRAM_BOT_TOKEN"
+local chatID = "YOUR_TELEGRAM_CHAT_ID"   -- Chat ID for Group or Channel
+
+-- Load required libraries
+local https = require("https")
+local json = require("json")
+
+------------------------------------------------------------
+-- Function: Send HTTPS request and return response
+-- Used to call Telegram API
+------------------------------------------------------------
+function getHttpsUrl(url)
+
+    -- Create an empty JSON body (not required for GET, but kept as sample)
+    local body = {}
+    local bodyJson = json.encode(body)
+
+    -- Sample header
+    local header = {}
+    header["content-type"] = "application/json"
+
+    -- Send request
+    local result_table, code, headers, status = https.request(url, bodyJson)
+
+    print("HTTP Response Code: " .. code)
+
+    -- Return nil if request failed
+    if code ~= 200 then
+        return nil
+    else
+        return body
+    end
+end
+
+------------------------------------------------------------
+-- Function: Send a message to Telegram Bot
+-- telegramBotToken = Telegram Bot Token
+-- message          = Message text
+-- telegramChatID   = Destination Chat ID
+------------------------------------------------------------
+function sendAlarm(telegramBotToken, message, telegramChatID)
+    local url = "https://api.telegram.org/bot"..telegramBotToken.."/sendMessage?text="..message.."&chat_id="..telegramChatID
+    --local url = 'http://v-box.net'
+    --local url = 'https://www.google.com/'
+    print("Get the link:"..url)
+    getHttpsUrl(url)
+end
+
+------------------------------------------------------------
+-- Main Function: Monitor Alarm Values and Send Notifications
+-- Example monitoring:
+-- 1) Bit Address  : @HDX
+-- 2) Word Address : @HDW10
+------------------------------------------------------------
+function AlarmNotificate.main()
+
+    --------------------------------------------------------
+    -- Bit Alarm Monitoring
+    --------------------------------------------------------
+    local bitValue = addr_getbit("@HDX")
+    local message = ""
+
+    print("Bit Value = " .. bitValue)
+
+    -- Alarm Triggered (0 -> 1)
+    if bitValue == 1 and bitValue ~= tempBit then
+        message = "Alarm triggered, monitoring point value is " .. bitValue
+        sendAlarm(botToken, message, chatID)
+        print("Notification sent (Alarm ON): " .. bitValue)
+
+    -- Alarm Cleared (1 -> 0)
+    elseif bitValue == 0 and bitValue ~= tempBit then
+        message = "Alarm cleared, monitoring point value is " .. bitValue
+        sendAlarm(botToken, message, chatID)
+        print("Notification sent (Alarm OFF): " .. bitValue)
+    end
+
+    -- Update previous value to prevent repeated notifications
+    tempBit = bitValue
+
+
+    --------------------------------------------------------
+    -- Word Alarm Monitoring
+    -- Sample condition: Word value >= 100 = Alarm ON
+    --------------------------------------------------------
+    local wordValue = addr_getword("@HDW10")
+    print("Word Value = " .. wordValue)
+
+    -- Word Alarm Triggered (below 100 -> >= 100)
+    if wordValue >= 100 and wordValue ~= tempWord and tempWord < 100 then
+        message = "Word alarm triggered, word value is " .. wordValue
+        sendAlarm(botToken, message, chatID)
+        print("Notification sent (Word Alarm ON): " .. wordValue)
+
+    -- Word Alarm Cleared (>= 100 -> below 100)
+    elseif wordValue < 100 and wordValue ~= tempWord and tempWord >= 100 then
+        message = "Word alarm cleared, word value is " .. wordValue
+        sendAlarm(botToken, message, chatID)
+        print("Notification sent (Word Alarm OFF): " .. wordValue)
+    end
+
+    -- Update previous value to prevent repeated notifications
+    tempWord = wordValue
+end
