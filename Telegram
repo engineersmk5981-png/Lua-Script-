@@ -98,8 +98,7 @@ function AlarmNotificate.main()
 
 
     --------------------------------------------------------
-    -- Word Alarm Monitoring
-    -- Sample condition: Word value >= 100 = Alarm ON
+    -- Sample condition: Word Alarm Monitoring
     --------------------------------------------------------
     local wordValue = addr_getword("@HDW10")
     print("Word Value = " .. wordValue)
