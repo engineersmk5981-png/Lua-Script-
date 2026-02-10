@@ -1,0 +1,85 @@
+local tempBit = 0
+local tempWord = 0
+------------------------------------------------------------
+-- SAMPLE CODE: LINE OA (Lua)
+-- Note: This is a sample template, replace values as needed.
+------------------------------------------------------------
+-- ตัวอย่าง Token / User ID (ใส่ค่าจริงตอนใช้งาน)
+local ChannelAccessToken = "YOUR_CHANNEL_ACCESS_TOKEN"
+local ToUserID = "YOUR_USER_ID"
+
+local https = require("https")
+local ltn12 = require("ltn12")
+
+------------------------------------------------------------
+-- Function: ส่งข้อความไปที่ LINE OA
+------------------------------------------------------------
+function sendLineOA(lineMessage)
+    local url = "https://api.line.me/v2/bot/message/push"
+
+    local bodyTable = {
+        to = ToUserID,
+        messages = {
+            {
+                type = "text",
+                text = lineMessage
+            }
+        }
+    }
+
+    local reqBody = json.encode(bodyTable)
+    local response_body = {}
+
+    local res, code, headers, status = https.request{
+        url = url,
+        method = "POST",
+        headers = {
+            ["Content-Type"] = "application/json",
+            ["Authorization"] = "Bearer " .. ChannelAccessToken,
+            ["Content-Length"] = tostring(#reqBody)
+        },
+        source = ltn12.source.string(reqBody),
+        sink = ltn12.sink.table(response_body)
+    }
+
+    print("LINE OA Response Code:", code)
+
+    if code ~= 200 then
+        print("Error:", table.concat(response_body))
+    else
+        print("Success:", table.concat(response_body))
+    end
+end
+
+------------------------------------------------------------
+-- Main Function
+------------------------------------------------------------
+function LineOfficial.main()
+local bitValue = addr_getbit("@test");
+    local message = ''
+    print("b=="..bitValue)
+    if bitValue == 1 and bitValue ~= tempBit then
+        message = 'Alarm V-Box triggered, the output is '.. bitValue
+        getMessageUrl(message)
+        print("Notification pushed of triggering alarm,"..bitValue)
+    elseif bitValue == 0 and bitValue ~= tempBit then
+        message = 'Alarm V-Box dismissed, the output is '.. bitValue
+        getMessageUrl(message)
+        print("Notification pushed of dismissing alarm,"..bitValue)
+    end
+    tempBit = bitValue----Prevent monitoring values from continuous being sent to the platform
+    
+    local wordValue = addr_getword("@t2")
+    print("w=="..wordValue)
+    --dosomething
+    if wordValue >= 100 and wordValue ~= tempWord and tempWord <= 100 then
+        message = 'Alarm V-Box triggered, the temperature is '.. wordValue
+        getMessageUrl(message)
+        print("Notification pushed of triggering alarm,"..wordValue)
+    elseif wordValue < 100 and wordValue ~= tempWord and tempWord >= 100 then
+        message = 'Alarm V-Box dismissed, the temperature is '.. wordValue
+        getMessageUrl(message)
+        print("Notification pushed of dismissing alarm,"..wordValue)
+    end
+    tempWord = wordValue----Prevent monitoring values from continuous being sent to the platform
+end
