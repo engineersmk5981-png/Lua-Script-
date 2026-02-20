@@ -1,0 +1,77 @@
+------------------------------------------------------------
+-- SAMPLE PROJECT: Send Data to Google Sheets (Lua)
+--
+-- Description:
+-- This sample demonstrates how to send JSON data
+-- from a Lua-based controller/device to a Google
+-- Apps Script Web App using HTTPS POST.
+--
+-- Before using:
+-- 1) Replace WEB_APP_URL with your deployed Apps Script URL.
+-- 2) Modify the payload structure to match your Apps Script.
+------------------------------------------------------------
+
+------------------------------------------------------------
+-- Main Entry Point (Example Scheduler Call)
+------------------------------------------------------------
+function monthly.main()
+------------------------------------------------------------
+-- Required Libraries
+------------------------------------------------------------
+local ltn12 = require("ltn12")
+local https = require("https")
+local json  = require("json")
+
+
+------------------------------------------------------------
+-- Google Apps Script Web App URL
+-- Replace with your own deployed URL
+------------------------------------------------------------
+local WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL"
+
+
+------------------------------------------------------------
+-- Function: Prepare Data and Send to Google Sheets
+------------------------------------------------------------
+function sendDataToSpreads()
+
+    -- Example payload (Modify keys to match your Apps Script)
+    local payload = {
+        timestamp = os.date("%Y-%m-%d %H:%M:%S", os.time()),
+        data1     = 123,        -- Example numeric value
+        data2     = "Sample",   -- Example text value
+        status    = "OK"
+    }
+
+    print("POST URL: " .. tostring(WEB_APP_URL))
+    print("Request Body: " .. json.encode(payload))
+
+    sendApi(WEB_APP_URL, payload)
+end
+
+
+------------------------------------------------------------
+-- Function: Send HTTPS POST Request
+-- req_url : Destination URL
+-- message : Lua table to be converted to JSON
+------------------------------------------------------------
+function sendApi(req_url, message)
+
+    local request_body = json.encode(message)
+    local response_body = {}
+
+    local res, code, response_headers = https.request{
+        url = req_url,
+        method = "POST",
+        headers = {
+            ["Content-Type"]   = "application/json",
+            ["Content-Length"] = tostring(#request_body)
+        },
+        source = ltn12.source.string(request_body),
+        sink   = ltn12.sink.table(response_body),
+    }
+
+    print("Response Code: " .. tostring(code))
+    print("Response Body:")
+    print(table.concat(response_body))
+end
