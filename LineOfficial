@@ -60,11 +60,11 @@ local bitValue = addr_getbit("@test");
     print("b=="..bitValue)
     if bitValue == 1 and bitValue ~= tempBit then
         message = 'Alarm V-Box triggered, the output is '.. bitValue
-        getMessageUrl(message)
+        sendLineOA(message)
         print("Notification pushed of triggering alarm,"..bitValue)
     elseif bitValue == 0 and bitValue ~= tempBit then
         message = 'Alarm V-Box dismissed, the output is '.. bitValue
-        getMessageUrl(message)
+        sendLineOA(message)
         print("Notification pushed of dismissing alarm,"..bitValue)
     end
     tempBit = bitValue----Prevent monitoring values from continuous being sent to the platform
@@ -74,11 +74,11 @@ local bitValue = addr_getbit("@test");
     --dosomething
     if wordValue >= 100 and wordValue ~= tempWord and tempWord <= 100 then
         message = 'Alarm V-Box triggered, the temperature is '.. wordValue
-        getMessageUrl(message)
+        sendLineOA(message)
         print("Notification pushed of triggering alarm,"..wordValue)
     elseif wordValue < 100 and wordValue ~= tempWord and tempWord >= 100 then
         message = 'Alarm V-Box dismissed, the temperature is '.. wordValue
-        getMessageUrl(message)
+        sendLineOA(message)
         print("Notification pushed of dismissing alarm,"..wordValue)
     end
     tempWord = wordValue----Prevent monitoring values from continuous being sent to the platform
