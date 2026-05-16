@@ -23,31 +23,40 @@ local chatID = "YOUR_TELEGRAM_CHAT_ID"   -- Chat ID for Group or Channel
 local https = require("https")
 local json = require("json")
 
+function url_encode(str)
+    if str then
+        str = string.gsub(str, "\n", "\r\n")
+        str = string.gsub(str, "([^%w ])",
+            function(c)
+                return string.format("%%%02X", string.byte(c))
+            end)
+        str = string.gsub(str, " ", "%%20")
+    end
+    return str
+end
 ------------------------------------------------------------
 -- Function: Send HTTPS request and return response
 -- Used to call Telegram API
 ------------------------------------------------------------
 function getHttpsUrl(url)
-
-    -- Create an empty JSON body (not required for GET, but kept as sample)
-    local body = {}
-    local bodyJson = json.encode(body)
-
-    -- Sample header
-    local header = {}
-    header["content-type"] = "application/json"
-
-    -- Send request
-    local result_table, code, headers, status = https.request(url, bodyJson)
-
-    print("HTTP Response Code: " .. code)
-
-    -- Return nil if request failed
+    print("Request URL:")
+    print(url)
+    local body, code, headers, status = https.request(url)
+    print("HTTP Code: "..tostring(code))
     if code ~= 200 then
+        print("Telegram Send Failed")
+        if body ~= nil then
+            print("Response:")
+            print(body)
+        end
         return nil
-    else
-        return body
     end
+
+    print("Telegram Send Success")
+    if body ~= nil then
+        print(body)
+    end
+    return body
 end
 
 ------------------------------------------------------------
@@ -57,11 +66,21 @@ end
 -- telegramChatID   = Destination Chat ID
 ------------------------------------------------------------
 function sendAlarm(telegramBotToken, message, telegramChatID)
-    local url = "https://api.telegram.org/bot"..telegramBotToken.."/sendMessage?text="..message.."&chat_id="..telegramChatID
-    --local url = 'http://v-box.net'
-    --local url = 'https://www.google.com/'
-    print("Get the link:"..url)
-    getHttpsUrl(url)
+
+    -- Encode message
+    local encodedMessage = url_encode(message)
+
+    -- Create Telegram API URL
+    local url =
+        "https://api.telegram.org/bot"
+        .. telegramBotToken
+        .. "/sendMessage?chat_id="
+        .. telegramChatID
+        .. "&text="
+        .. encodedMessage
+
+    -- Send request
+    return getHttpsUrl(url)
 end
 
 ------------------------------------------------------------
